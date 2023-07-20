@@ -7,6 +7,10 @@
       path = builtins.path { path = ./example; filter = path: _: baseNameOf path == "flake.nix"; };
     };
 
+    # NOTE: this is a lib factory, as it takes: { pkgs, lib }
+    # so before using we need to pass it to pkgs.callPackage
+    lib = import ./nix/lib.nix;
+
     # Config for https://github.com/srid/nixci
     # To run this, `nix run github:srid/nixci`
     nixci = let overrideInputs = { "services-flake" = ./.; }; in {
