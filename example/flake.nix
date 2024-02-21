@@ -30,40 +30,13 @@
             services.postgres."pg1" = {
               enable = true;
               listen_addresses = "127.0.0.1";
+              superuser = "postgres";
               initialDatabases = [
                 {
                   name = dbName;
                   schemas = [ "${inputs.northwind}/northwind.sql" ];
                 }
               ];
-            };
-
-            services.postgres."pg2" = {
-              enable = true;
-              listen_addresses = "127.0.0.1";
-              port = 5433;
-            };
-            # Start `pg2-init` process after `pg1-init`
-            settings.processes."pg2-init".depends_on."pg1-init".condition = "process_completed_successfully";
-
-            settings.processes.pgweb =
-              let
-                pgcfg = config.services.postgres.pg1;
-              in
-              {
-                environment.PGWEB_DATABASE_URL = "postgres://$USER@${pgcfg.listen_addresses}:${builtins.toString pgcfg.port}/${dbName}";
-                command = pkgs.pgweb;
-                depends_on."pg1".condition = "process_healthy";
-              };
-            settings.processes.test = {
-              command = pkgs.writeShellApplication {
-                name = "pg1-test";
-                runtimeInputs = [ config.services.postgres.pg1.package ];
-                text = ''
-                  echo 'SELECT version();' | psql -h 127.0.0.1 ${dbName}
-                '';
-              };
-              depends_on."pg1".condition = "process_healthy";
             };
           };
 
